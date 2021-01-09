@@ -1,0 +1,107 @@
+#link to find the covid data: https://github.com/datasets/covid-19/blob/master/data/worldwide-aggregated.csv
+#link to find the stock data: https://finance.yahoo.com/quote/YM%3DF/history?p=YM%3DF 
+
+#Works with Covid Data
+covid_data = []
+covid_date = []
+covid_confirmed = []
+with open(r'C:\Users\avi65\.spyder-py3\worldwide-aggregated.csv') as covid_file:
+    reader = csv.reader(covid_file)
+    for row in reader:
+        covid_data.append(row)
+for a, b, c, d, e in covid_data:
+    covid_date.append(a)
+    covid_confirmed.append(b)
+covid_date.remove('Date')
+covid_confirmed.remove('Confirmed')
+
+#Works with Stock Data
+#Initialize Stock Lists
+#Open file and append contents to lists
+stock_data = []
+stock_date = []
+stock_open = []
+with open(r'C:\Users\avi65\.spyder-py3\YM=F.csv') as stock_file:
+    reader = csv.reader(stock_file)
+    for rows in reader:
+        stock_data.append(rows)
+for a, b, c, d, e, f, g in stock_data:
+    stock_date.append(a)
+    stock_open.append(b)
+stock_date.remove('Date')
+stock_open.remove('Open')
+
+stock_date_set = set(stock_date)
+covid_date_set = set(covid_date)
+different_date = covid_date_set - stock_date_set
+updated_covid_date = covid_date_set - different_date
+new_covid_date = sorted(list(updated_covid_date))
+
+
+total_covid = zip(covid_date, covid_confirmed)
+total_covid_list = list(total_covid)
+total_stock = zip(stock_date, stock_open)
+total_stock_list = list(total_stock)
+
+covid_tuple_conversion = [] #converting the elements of total_covid_lists into lists instead of tuples with the help of the dates that are common between stock and confirmed cases
+for value in total_covid_list:
+    for i in different_date:
+        if i in value:
+            total_covid_list.remove(value)
+    value_list = list(value)
+    covid_tuple_conversion.append(value_list)
+
+stock_tuple_conversion = [] #converting the elements of total_stock_list into lists
+for money in total_stock_list:
+    money_list = list(money)
+    stock_tuple_conversion.append(money_list)
+
+covid_confirmed_cases = [] #picks out the number of confirmed cases from the list of total covid data
+for valuee in covid_tuple_conversion:
+    covid_confirmed_cases .append(valuee[1])
+
+stock_open_values = [] #picks out the price of the stock from the list of total stock data
+for valueee in stock_tuple_conversion:
+    stock_open_values.append(valueee[1])
+
+indexx = [] #retrieves the index of stock data that has the value of 0.000000, then removes the stock value from the list after appending index value from list
+for stok in stock_open_values:
+    if stok == '0.000000':
+        ind = stock_open_values.index(stok)
+        indexx.append(ind)
+        stock_open_values.remove(stok)
+for element in indexx: #removes the confirmed cases value and date value in positions that the stock value was 0.000000
+    covid_confirmed_cases.remove(covid_confirmed_cases[element])
+    new_covid_date.remove(new_covid_date[element])
+
+
+converted_dates = [dt.strptime(d, '%Y-%m-%d') for d in new_covid_date]
+xs = matplotlib.dates.date2num(converted_dates)
+hfmt = matplotlib.dates.DateFormatter('%Y-%m-%d')
+#date_length = range(0, len(new_covid_date))
+
+fig, ax1 = plt.subplots()
+ax1.xaxis.set_major_formatter(hfmt)
+plt.setp(ax1.get_xticklabels(), size=8)
+color = 'tab:red'
+ax1.set_xlabel('Date')
+ax1.set_ylabel('Confirmed Cases', color=color)
+ax1.plot(converted_dates, covid_confirmed_cases, color=color)
+ax1.autoscale(axis = 'y')
+ax1.tick_params(axis='y', labelcolor=color, labelsize=10)
+ax1.set_yticks(range(0, 58, 4))
+
+ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+color = 'tab:blue'
+ax2.set_ylabel('Stock Open Values', color=color)  # we already handled the x-label with ax1
+ax2.plot(converted_dates, stock_open_values, color=color)
+ax2.autoscale(axis = 'y')
+ax2.tick_params(axis='y', labelcolor=color)
+ax2.set_yticks(range(0, 58, 4))
+
+
+fig.tight_layout()  # otherwise the right y-label is slightly clipped
+plt.title("Confirmed Cases of COVID-19 and Open Values of Dow Jones Stock over a Period of Time")
+plt.show()
+
+print(new_covid_date)
